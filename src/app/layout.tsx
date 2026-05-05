@@ -1,11 +1,27 @@
-// src/app/layout.tsx
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import "./globals.css";
 
-export const metadata = {
-  title: 'HabitFlow 2026',
-  description: 'Master your discipline with high-performance tracking.',
+const inter = Inter({ subsets: ["latin"] });
+
+export const metadata: Metadata = {
+  title: "HabitFlow 2026",
+  description: "Master your discipline with high-performance tracking.",
   icons: {
-    icon: '/favicon.svg',       // Main favicon
-    shortcut: '/favicon.svg',   // Shortcut icon
-    apple: '/favicon.svg',      // For iOS devices
+    icon: "/favicon.svg",
+    shortcut: "/favicon.svg",
+    apple: "/favicon.svg",
   },
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="en">
+      <body className={inter.className}>{children}</body>
+    </html>
+  );
 }
