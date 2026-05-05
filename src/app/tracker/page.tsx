@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { 
   Plus, CheckCircle2, Circle, LogOut, 
-  Download, BarChart3, LayoutGrid, Target, 
+  Download, BarChart3, LayoutGrid, 
   Flame, Trash2, RotateCcw
 } from 'lucide-react';
 import { 
@@ -16,6 +16,7 @@ import {
   ResponsiveContainer, Cell 
 } from 'recharts';
 import * as XLSX from 'xlsx';
+import Image from 'next/image';
 
 export default function HabitTracker() {
   const [habits, setHabits] = useState<any[]>([]);
@@ -48,7 +49,6 @@ export default function HabitTracker() {
     setLoading(true);
     const { data: habitsData } = await supabase.from('habits').select('*').eq('user_id', userId);
     const { data: logsData } = await supabase.from('habit_logs').select('*').eq('user_id', userId);
-
     if (habitsData) setHabits(habitsData);
     if (logsData) {
       setLogs(logsData);
@@ -58,28 +58,20 @@ export default function HabitTracker() {
   };
 
   const calculatePerfectStreak = (allHabits: any[], allLogs: any[]) => {
-    if (allHabits.length === 0) {
-      setStreak(0);
-      return;
-    }
+    if (allHabits.length === 0) { setStreak(0); return; }
     let currentStreak = 0;
     let checkDate = today;
-
     while (true) {
       const dateStr = format(checkDate, 'yyyy-MM-dd');
       const activeHabitsOnThatDay = allHabits.filter(h => !isAfter(parseISO(h.start_date), checkDate));
       if (activeHabitsOnThatDay.length === 0) break;
       const completedOnThatDay = allLogs.filter(l => l.log_date === dateStr && l.completed);
       const isPerfectDay = activeHabitsOnThatDay.length > 0 && completedOnThatDay.length === activeHabitsOnThatDay.length;
-
       if (isPerfectDay) {
         currentStreak++;
         checkDate = subDays(checkDate, 1);
       } else {
-        if (isSameDay(checkDate, today)) {
-          checkDate = subDays(checkDate, 1);
-          continue;
-        }
+        if (isSameDay(checkDate, today)) { checkDate = subDays(checkDate, 1); continue; }
         break;
       }
     }
@@ -104,19 +96,6 @@ export default function HabitTracker() {
       setHabits(updatedHabits);
       setNewHabit('');
       calculatePerfectStreak(updatedHabits, logs);
-    }
-  };
-
-  const deleteHabit = async (e: React.MouseEvent, habitId: string) => {
-    e.stopPropagation();
-    if (!confirm('Delete this habit permanently?')) return;
-    const { error } = await supabase.from('habits').delete().eq('id', habitId);
-    if (!error) {
-      const updatedHabits = habits.filter(h => h.id !== habitId);
-      const updatedLogs = logs.filter(l => l.habit_id !== habitId);
-      setHabits(updatedHabits);
-      setLogs(updatedLogs);
-      calculatePerfectStreak(updatedHabits, updatedLogs);
     }
   };
 
@@ -154,16 +133,6 @@ export default function HabitTracker() {
     XLSX.writeFile(workbook, `HabitFlow_2026_${format(today, 'MMM')}.xlsx`);
   };
 
-  const getWeeklyData = () => {
-    return Array.from({ length: 7 }).map((_, i) => {
-      const d = subDays(today, 6 - i);
-      const dStr = format(d, 'yyyy-MM-dd');
-      const completedCount = logs.filter(l => l.log_date === dStr).length;
-      const activeHabits = habits.filter(h => !isBefore(d, parseISO(h.start_date))).length;
-      return { day: format(d, 'EEE'), pct: activeHabits > 0 ? Math.round((completedCount / activeHabits) * 100) : 0 };
-    });
-  };
-
   if (loading) return <div className="h-screen flex items-center justify-center bg-[#0a0a0c] text-indigo-400 font-black italic tracking-tighter animate-pulse">LOADING FLOW...</div>;
 
   return (
@@ -171,7 +140,15 @@ export default function HabitTracker() {
       <nav className="sticky top-0 z-50 backdrop-blur-2xl border-b border-white/5 px-6 py-4">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div className="flex items-center gap-3">
-            <div className="bg-gradient-to-br from-indigo-500 to-rose-500 p-2 rounded-xl shadow-lg shadow-indigo-500/20"><Target className="text-white" size={20} /></div>
+            {/* Logo Section */}
+            <div className="relative w-10 h-10 overflow-hidden rounded-xl shadow-lg shadow-indigo-500/20">
+              <Image 
+                src="/habitflow-logo.svg" 
+                alt="HabitFlow 2026" 
+                fill
+                className="object-contain p-1"
+              />
+            </div>
             <span className="text-xl font-black uppercase italic tracking-tighter text-white">HabitFlow <span className="text-indigo-500">2026</span></span>
           </div>
           <button onClick={() => supabase.auth.signOut()} className="text-rose-400 font-bold text-xs hover:bg-rose-500/10 px-4 py-2 rounded-xl transition-all tracking-widest uppercase">Logout</button>
@@ -182,8 +159,8 @@ export default function HabitTracker() {
         <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="md:col-span-2 p-8 rounded-[2rem] bg-white/5 border border-white/5 shadow-sm">
             <h2 className="text-4xl font-bold mb-2 text-white">Welcome, {user?.user_metadata?.full_name?.split(' ')[0]}!</h2>
-            <p className="text-slate-400 mb-6 font-medium">Tracking since {format(monthStart, 'MMMM yyyy')}</p>
-            <button onClick={downloadMonthlyReport} className="flex items-center gap-2 bg-white text-black px-6 py-3 rounded-2xl font-bold text-sm hover:scale-105 transition-all shadow-lg shadow-indigo-500/10">
+            <p className="text-slate-400 mb-6 font-medium">Master your discipline with precision.</p>
+            <button onClick={downloadMonthlyReport} className="flex items-center gap-2 bg-white text-black px-6 py-3 rounded-2xl font-bold text-sm hover:scale-105 transition-all">
               <Download size={18} /> EXPORT DATA
             </button>
           </div>
@@ -196,6 +173,7 @@ export default function HabitTracker() {
           </div>
         </section>
 
+        {/* Habits & Analytics Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           <div className="lg:col-span-4 space-y-6">
             <div className="p-6 rounded-3xl border border-white/5 bg-white/5 shadow-sm">
@@ -217,14 +195,14 @@ export default function HabitTracker() {
                   <div 
                     key={habit.id} onClick={() => toggleHabit(habit.id)}
                     className={`group cursor-pointer p-5 rounded-[1.5rem] border transition-all flex items-center justify-between ${
-                      isDone ? 'bg-indigo-600 border-indigo-400 shadow-lg shadow-indigo-500/20' : 'bg-white/5 border-white/5 hover:border-white/20 shadow-sm'
+                      isDone ? 'bg-indigo-600 border-indigo-400 shadow-lg shadow-indigo-500/20' : 'bg-white/5 border-white/5 hover:border-white/20'
                     }`}
                   >
                     <div className="flex items-center gap-3">
                       {isDone ? <CheckCircle2 className="text-white" size={24} /> : <Circle className="text-slate-700" size={24} />}
                       <span className={`font-bold text-white/80 ${isDone ? '!text-white' : ''}`}>{habit.name}</span>
                     </div>
-                    <button onClick={(e) => deleteHabit(e, habit.id)} className="opacity-0 group-hover:opacity-100 p-2 text-rose-400 hover:bg-rose-500/10 rounded-lg transition-all"><Trash2 size={18} /></button>
+                    <button onClick={(e) => {e.stopPropagation(); if(confirm('Delete permanently?')) supabase.from('habits').delete().eq('id', habit.id).then(() => fetchData(user.id))}} className="opacity-0 group-hover:opacity-100 p-2 text-rose-400 hover:bg-rose-500/10 rounded-lg transition-all"><Trash2 size={18} /></button>
                   </div>
                 );
               })}
@@ -232,29 +210,31 @@ export default function HabitTracker() {
           </div>
 
           <div className="lg:col-span-8 space-y-8">
+            {/* Weekly Analytics */}
             <div className="p-8 rounded-[2rem] border border-white/5 bg-white/5 shadow-sm">
-              <h3 className="text-xl font-bold flex items-center gap-2 mb-8 italic text-white">
+              <h3 className="text-xl font-bold flex items-center gap-2 mb-8 italic text-white uppercase tracking-tighter">
                 <BarChart3 className="text-indigo-500" /> Consistency Lab
               </h3>
               <div className="h-[250px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={getWeeklyData()}>
+                  <BarChart data={Array.from({length: 7}).map((_, i) => { const d = subDays(today, 6-i); const dStr = format(d, 'yyyy-MM-dd'); const done = logs.filter(l => l.log_date === dStr).length; const active = habits.filter(h => !isAfter(parseISO(h.start_date), d)).length; return { day: format(d, 'EEE'), pct: active > 0 ? Math.round((done / active) * 100) : 0 }; })}>
                     <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12, fontWeight: 'bold'}} />
                     <Tooltip cursor={{fill: 'transparent'}} content={({active, payload}) => active && payload && (
                       <div className="bg-slate-900 border border-white/10 p-3 rounded-xl shadow-xl">
-                        <p className="text-xs font-bold text-indigo-400">{payload[0].value}% Done</p>
+                        <p className="text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase">{payload[0].value}% Done</p>
                       </div>
                     )} />
-                    <Bar dataKey="pct" radius={[10, 10, 10, 10]} barSize={45}>
-                      {getWeeklyData().map((entry, index) => <Cell key={index} fill={entry.pct === 100 ? '#10b981' : '#6366f1'} />)}
+                    <Bar dataKey="pct" radius={[10, 10, 10, 10]} barSize={40}>
+                      {(Array.from({length: 7}).map((_, i) => { const d = subDays(today, 6-i); const dStr = format(d, 'yyyy-MM-dd'); const done = logs.filter(l => l.log_date === dStr).length; const active = habits.filter(h => !isAfter(parseISO(h.start_date), d)).length; return { pct: active > 0 ? Math.round((done / active) * 100) : 0 }; })).map((entry, index) => <Cell key={index} fill={entry.pct === 100 ? '#10b981' : '#6366f1'} />)}
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
               </div>
             </div>
 
+            {/* Monthly Progress Table */}
             <div className="rounded-[2rem] border border-white/5 bg-white/5 overflow-hidden shadow-sm">
-              <div className="p-6 border-b border-white/5 bg-white/5"><h3 className="text-sm font-black uppercase tracking-widest text-slate-400">Monthly Progress View</h3></div>
+              <div className="p-6 border-b border-white/5 bg-white/5"><h3 className="text-sm font-black uppercase tracking-widest text-slate-400 text-center">Monthly Progress View</h3></div>
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse">
                   <thead>
@@ -275,9 +255,7 @@ export default function HabitTracker() {
                           return (
                             <td key={dStr} className="p-1">
                               <div className={`w-3 h-3 rounded-full mx-auto transition-all ${
-                                isBeforeStart ? 'bg-white/5' : 
-                                isFuture ? 'opacity-0' : 
-                                hasLog ? 'bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.4)]' : 'border border-white/10'
+                                isBeforeStart ? 'bg-white/5' : isFuture ? 'opacity-0' : hasLog ? 'bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.4)]' : 'border border-white/10'
                               }`} />
                             </td>
                           );

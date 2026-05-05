@@ -1,7 +1,8 @@
 'use client';
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Eye, EyeOff, Lock, Mail, User, Target } from 'lucide-react';
+import { Eye, EyeOff, Lock, Mail, User } from 'lucide-react';
+import Image from 'next/image';
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -33,8 +34,14 @@ export default function AuthPage() {
     <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-[#0a0a0c] p-4 transition-colors duration-500">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center space-y-2">
-          <div className="inline-block bg-indigo-600 p-3 rounded-2xl shadow-xl shadow-indigo-500/20 mb-2">
-            <Target className="text-white" size={32} />
+          {/* Futuristic Logo Implementation */}
+          <div className="inline-block relative w-20 h-20 mb-2">
+            <Image 
+              src="/habitflow-logo.svg" 
+              alt="HabitFlow Logo" 
+              fill
+              className="object-contain drop-shadow-2xl"
+            />
           </div>
           <h2 className="text-3xl font-black tracking-tighter text-slate-900 dark:text-white uppercase italic">
             HabitFlow <span className="text-indigo-600">2026</span>
@@ -84,7 +91,7 @@ export default function AuthPage() {
 
             <button 
               disabled={loading}
-              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-2xl font-bold shadow-lg shadow-indigo-500/30 transition-all active:scale-95 disabled:opacity-50 disabled:active:scale-100"
+              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-2xl font-bold shadow-lg shadow-indigo-500/30 transition-all active:scale-95 disabled:opacity-50"
             >
               {loading ? 'PROCESSING...' : isLogin ? 'SIGN IN' : 'CREATE ACCOUNT'}
             </button>
@@ -99,10 +106,6 @@ export default function AuthPage() {
             </button>
           </div>
         </div>
-
-        <p className="text-center text-[10px] text-slate-400 dark:text-slate-600 tracking-[0.4em] uppercase font-mono">
-          © 2026 Habit-Flow Engineering
-        </p>
       </div>
     </div>
   );
